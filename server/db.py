@@ -1,25 +1,21 @@
-from bson import ObjectId, json_util
+from bson import ObjectId
 import pymongo
-import json
-from middleware.utils import validate_input
+from middleware.utils import validate_input, parse_json
 import datetime
 
 connection_url = "mongodb+srv://gunit_ryde:gunit_ryde@ryde-cluster.pdveurs.mongodb.net/?retryWrites=true&w=majority"
 db_name = "rydedb"
 user_collection_name = "users"
 
-
 def init_connection():
-    
     client = pymongo.MongoClient(connection_url)
     db = client.get_database(db_name)    
     return db
-db = init_connection()
-user_collection = db[user_collection_name]
 
 def add_user(user):
+    db = init_connection()
+    user_collection = db[user_collection_name]
     u_id = user_collection.insert_one(user)
-    print(u_id)
     return u_id.inserted_id
     
 def create_new_user(user_data):
@@ -44,6 +40,13 @@ def create_new_user(user_data):
         "createdAt": datetime.datetime.now()
     }
     
-    print(user)
     u_id = add_user(user)
     return u_id
+
+def get_user_by_id(id):
+
+    db = init_connection()
+    user_collection = db[user_collection_name]
+    user = user_collection.find_one({"_id": ObjectId(id)})
+    
+    return parse_json(user)
