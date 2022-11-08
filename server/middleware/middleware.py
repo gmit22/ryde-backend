@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from models.user import User
-from db import create_new_user, get_user_by_id
+from db import create_new_user, get_user_by_id, get_all_users
 
 users_api = Blueprint(
     'users_api', 'users_api', url_prefix='/api/v1/')
@@ -27,3 +27,14 @@ def get_user(id):
     
     except Exception as e:
         return jsonify(f"[get_user] {str(e)}"), 400
+    
+@users_api.route('/user', methods=["GET"])
+def get_users():
+    try:
+        user_details = get_all_users()
+        if user_details is None:
+            user_details = []
+        return jsonify({"users": user_details}), 200
+        
+    except Exception as e:
+        return jsonify({"error": f'[get_user] {str(e)}'}), 400

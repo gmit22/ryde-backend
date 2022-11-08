@@ -50,3 +50,14 @@ def get_user_by_id(id):
     user = user_collection.find_one({"_id": ObjectId(id)})
     
     return parse_json(user)
+
+def get_all_users():
+    db = init_connection()
+    user_collection = db[user_collection_name]
+    
+    resp = user_collection.find()
+    total_users = list(resp)
+    
+    # if len(total_users) == 0:
+    #     raise Exception(f"[get_all_users] No users were found stored in the db.")
+    return parse_json(total_users)
