@@ -1,20 +1,12 @@
 from bson import ObjectId
-import pymongo
+from flask import current_app as app
 from middleware.utils import validate_input, parse_json
 import datetime
 
-connection_url = "mongodb+srv://gunit_ryde:gunit_ryde@ryde-cluster.pdveurs.mongodb.net/?retryWrites=true&w=majority"
-db_name = "rydedb"
 user_collection_name = "users"
 
-def init_connection():
-    client = pymongo.MongoClient(connection_url)
-    db = client.get_database(db_name)    
-    return db
-
 def add_user(user):
-    db = init_connection()
-    user_collection = db[user_collection_name]
+    user_collection = app.db[user_collection_name]
     u_id = user_collection.insert_one(user)
     return u_id.inserted_id
     
@@ -45,16 +37,15 @@ def create_new_user(user_data):
 
 def get_user_by_id(id):
 
-    db = init_connection()
-    user_collection = db[user_collection_name]
+    # db = init_connection()
+    user_collection = app.db[user_collection_name]
     user = user_collection.find_one({"_id": ObjectId(id)})
     
     return parse_json(user)
 
 def get_all_users():
-    db = init_connection()
-    user_collection = db[user_collection_name]
-    
+    # db = init_connection()
+    user_collection = app.db[user_collection_name]
     resp = user_collection.find()
     total_users = list(resp)
     
@@ -68,8 +59,8 @@ def delete_user_by_id(id):
     if user is None:
         return None
     
-    db = init_connection()
-    user_collection = db[user_collection_name]
+    # db = init_connection()
+    user_collection = app.db[user_collection_name]
           
     resp = user_collection.delete_one({"_id": ObjectId(id)})
     return resp
@@ -80,8 +71,8 @@ def update_user_by_id(u_id, request):
     if user is None:
         return None
     
-    db = init_connection()
-    user_collection = db[user_collection_name]
+    # db = init_connection()
+    user_collection = app.db[user_collection_name]
     
     name = request.get("name")
     dob = request.get("dob")
