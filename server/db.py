@@ -61,3 +61,15 @@ def get_all_users():
     # if len(total_users) == 0:
     #     raise Exception(f"[get_all_users] No users were found stored in the db.")
     return parse_json(total_users)
+
+def delete_user_by_id(id):
+    
+    user = get_user_by_id(id)
+    if user is None:
+        return None
+    
+    db = init_connection()
+    user_collection = db[user_collection_name]
+          
+    resp = user_collection.delete_one({"_id": ObjectId(id)})
+    return resp
