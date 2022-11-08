@@ -89,7 +89,7 @@ def update_user_by_id(u_id, request):
     description = request.get("description")
 
     changed_fields = {}
-# Add another try/catch here to backtrack to relevant function
+    # Add another try/catch here to backtrack to relevant function
     try:
         if name is not None:
             changed_fields['name'] = validate_input(name, str, 'name')
