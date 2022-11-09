@@ -1,12 +1,46 @@
 from flask import Blueprint, request, jsonify
-from models.user import User
 from middleware.user_client import create_new_user, get_user_by_id, get_all_users, delete_user_by_id, update_user_by_id, \
     add_friend_to_user, get_nearby_users
+from flask import request, jsonify
+
+# imports for PyJWT authentication
+import jwt
+from functools import wraps
 
 users_api = Blueprint(
     'users_api', 'users_api', url_prefix='/api/v1/')
 
+#secret key used for encoding data
+SECRET_KEY="hashencodetoken"
+#encryption algorithm
+ALGORITHM = "HS256"
+
+# decorator for verifying the JWT
+def token_required(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        token = None
+        # jwt is passed in the request header
+        if 'x-access-token' in request.headers:
+            token = request.headers['x-access-token']
+        # return 401 if token is not passed
+        if not token:
+            return jsonify({'message' : 'Token is missing !!'}), 401
+  
+        try:
+            # decoding the payload to fetch the stored details
+            data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        except:
+            return jsonify({
+                'message' : 'Token is invalid !!'
+            }), 401
+  
+        return  f(*args, **kwargs)
+  
+    return decorated
+
 @users_api.route('/user', methods=["POST"])
+@token_required
 def create_user():
 
     user_data = request.get_json()
@@ -17,6 +51,7 @@ def create_user():
         return jsonify({'error': f'[create_user] {str(e)}'}), 400
 
 @users_api.route('/user/<id>', methods=["GET"])
+@token_required
 def get_user(id):
     
     try:
@@ -30,6 +65,7 @@ def get_user(id):
         return jsonify(f"[get_user] {str(e)}"), 400
     
 @users_api.route('/user', methods=["GET"])
+@token_required
 def get_users():
     try:
         user_details = get_all_users()
@@ -41,6 +77,7 @@ def get_users():
         return jsonify({"error": f'[get_user] {str(e)}'}), 400
     
 @users_api.route('/delete-user/<id>', methods=["Post"])
+@token_required
 def delete_user(id):
     
     try:
@@ -59,6 +96,7 @@ def delete_user(id):
         return jsonify(f"[delete_user_by_id] {str(e)}"), 400
     
 @users_api.route('/update-user', methods=["Put"])
+@token_required
 def update_user():
 
     user_data = request.get_json()
@@ -84,6 +122,7 @@ def update_user():
         return jsonify({"error": f"[update_user] {str(e)} "}), 400
 
 @users_api.route('/add-friend', methods=['Put'])
+@token_required
 def add_friend():
     
     user_id = request.args.get('userId')
@@ -105,6 +144,7 @@ def add_friend():
         return jsonify({"error": f"{str(e)}"}), 400
   
 @users_api.route('/get-nearby-friends/<id>', methods=['Get'])  
+@token_required
 def get_nearby_friends(id):
     
     limit = request.args.get('limit')
