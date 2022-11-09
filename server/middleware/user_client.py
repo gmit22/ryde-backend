@@ -8,7 +8,7 @@ user_collection_name = "users"
 def add_user(user: dict):
     user_collection = app.db[user_collection_name]
     u_id = user_collection.insert_one(user)
-    return u_id.inserted_id
+    return u_id.inserted_id if u_id else None
 
 """
     Parses the given input to check and validate each field of the user data against the expected types. 
@@ -25,13 +25,16 @@ def create_new_user(user_data: dict):
         latitude = validate_input(user_data.get('latitude'), float, 'latitude')
             
     except Exception as e:
+        app.logger.error(f"{str(e)}")
         raise Exception(f"[parse_user] {str(e)}")
     
     if user_data.get("createdAt") is not None:
-        raise Exception("[create_new_user] The creation timing of the user has to be stamped by API")     
+        app.logger.error("[create_new_user] The creation timing of the user has to be stamped by API")
+        raise Exception("The creation timing of the user has to be stamped by API")     
     
     if user_data.get("friends") is not None:
-        raise Exception("[create_new_user] The user cannot be created with friends as an input")  
+        app.logger.error("[create_new_user] The user cannot be created with friends as an input")
+        raise Exception("The user cannot be created with friends as an input")  
           
     user = {
         "name": name, 
@@ -44,19 +47,20 @@ def create_new_user(user_data: dict):
     }
     
     u_id = add_user(user)
+    app.logger.info(f"[create_new_user] {user} added to the database, with u_id to the database {u_id}")
     return u_id
 
 def get_user_by_id(id: str):
     user_collection = app.db[user_collection_name]
     user = user_collection.find_one({"_id": ObjectId(id)})
-    
+    app.logger.info(f"[get_user_by_id] {user} corresponding to {id} found in the database")
     return parse_json(user)
 
 def get_all_users():
     user_collection = app.db[user_collection_name]
     resp = user_collection.find()
     total_users = list(resp)
-    
+    app.logger.info(f"[get_all_users] Total {len(total_users)} users found in the database")
     return parse_json(total_users)
 
 """
@@ -66,6 +70,7 @@ def delete_user_by_id(id: str):
     
     user = get_user_by_id(id)
     if user is None:
+        app.logger.warning(f"[delete_user_by_id] No user corresponding to {id} found in the database")
         return None
     
     user_collection = app.db[user_collection_name]      
@@ -75,12 +80,12 @@ def delete_user_by_id(id: str):
 """
     Given the user_data, and u_id for the corresponding user; extract the fields provided to make an update to the 
     user entity.
-
 """
 def update_user_by_id(u_id: str, user_data: dict):
 
     user = get_user_by_id(u_id)
     if user is None:
+        app.logger.warning(f"[update_user_by_id] No user corresponding to {u_id} found in the database")
         return None
     
     user_collection = app.db[user_collection_name]
@@ -113,7 +118,8 @@ def update_user_by_id(u_id: str, user_data: dict):
             changed_fields["longitude"] = longitude
             
     except AssertionError as e:
-        raise AssertionError(f"[update_user_by_id] {str(e)}")
+        app.logger.error(f"[updated_user_by_id] {str(e)}")
+        raise AssertionError(f"{str(e)}")
     
     update = {"$set": changed_fields}
 
@@ -131,7 +137,8 @@ def update_user_by_id(u_id: str, user_data: dict):
 def add_friend_to_user(user_id: str, friend_id: str):
    
     if user_id == friend_id:
-        raise Exception("[add_friend_to_user] user_id and friend_id must be different for the friend.")
+        app.logger.error(f"[add_friend_to_user] user cannot add themself as a friend. user_id and friend_id must be different")
+        raise Exception("user_id and friend_id must be different for the friend.")
 
     # Checks that a user corresponding to the provided user_id, friend_id exists in the database.
     user = get_user_by_id(user_id)
@@ -141,12 +148,14 @@ def add_friend_to_user(user_id: str, friend_id: str):
         return None
     
     if "friends" not in user:
+        app.logger.info(f"[add_friend_to_user] No friends currently exist associated to {user_id}")
         user["friends"] = [friend_id]
     else:
         curr_friends = user["friends"]
         for curr_friend in curr_friends:
             if curr_friend == friend_id:
-                raise Exception(f"[add_friend_to_user] The user {friend_id} is already a friend of the user {user_id}.")
+                app.logger.error(f"[add_friend_to_user] {friend_id} is already a friend of user {user_id}")
+                raise Exception(f"The user {friend_id} is already a friend of the user {user_id}.")
         
         user["friends"].append(friend_id)
 
@@ -170,7 +179,8 @@ def get_nearby_users(user_id: str, distance: str, limit=None):
         max_users = int(limit)
 
     if (user.get("longitude") is None and user.get("latitude") is None):
-        raise Exception("[get_nearby_users] user does not have both latitude and longitude values")
+        app.logger.error(f"[get_nearby_users] user does not have both latitude and longitude values")
+        raise Exception("user does not have both latitude and longitude values")
        
     longitude = float(user.get("longitude"))
     latitude = float(user.get("latitude"))
@@ -180,6 +190,7 @@ def get_nearby_users(user_id: str, distance: str, limit=None):
     nearby_friends = []
     
     if user.get("friends") is None or len(user["friends"]) == 0:
+        app.logger.error(f"[get_nearby_users] No friends associated to the given user {user_id} found")
         return nearby_friends
     else:
         total_friends = user.get("friends")
@@ -202,4 +213,5 @@ def get_nearby_users(user_id: str, distance: str, limit=None):
                     nearby_friends.append(friend)
                     number_of_friends += 1 
         
+    app.logger.info(f"[get_nearby_users] Total {len(nearby_friends)} found associated to the given user")
     return nearby_friends
