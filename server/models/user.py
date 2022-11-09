@@ -10,4 +10,5 @@ class User(BaseModel):
     address: str
     description: str
     createdAt: datetime
+    friends: list
     

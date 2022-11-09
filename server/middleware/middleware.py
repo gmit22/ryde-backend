@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from models.user import User
-from middleware.user_client import create_new_user, get_user_by_id, get_all_users, delete_user_by_id, update_user_by_id
+from middleware.user_client import create_new_user, get_user_by_id, get_all_users, delete_user_by_id, update_user_by_id, add_friend_to_user
 
 users_api = Blueprint(
     'users_api', 'users_api', url_prefix='/api/v1/')
@@ -81,3 +81,24 @@ def update_user():
     
     except Exception as e:
         return jsonify({"error": f"[update_user] {str(e)} "}), 400
+
+@users_api.route('/add-friend', methods=['Put'])
+def add_friend():
+    
+    user_id = request.args.get('userId')
+    friend_id = request.args.get('friendId')
+
+    try:
+        if user_id is None or friend_id is None:
+            raise Exception("We need the user_id and the friend_id to perform the required operation.")
+        
+        friend_user_update = add_friend_to_user(user_id, friend_id)
+        user_friend_update = add_friend_to_user(friend_id, user_id)
+        
+        if friend_user_update is None or user_friend_update is None:
+            return jsonify({"Status": "The requested user_id or friend_id does not exist in the database"}), 404 
+            
+        return jsonify({"status": f"Success"}), 200
+        
+    except Exception as e:
+        return jsonify({"error": f"{str(e)}"}), 400

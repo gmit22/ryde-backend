@@ -22,14 +22,17 @@ def create_new_user(user_data):
         raise Exception(f"[parse_user] {str(e)}")
     
     if user_data.get("createdAt") is not None:
-        raise Exception("[parse_user] The creation timing of the user has to be stamped by API")       
+        raise Exception("[create_new_user] The creation timing of the user has to be stamped by API")     
+    
+    if user_data.get("friends") is not None:
+        raise Exception("[create_new_user] The user cannot be created with friends as an input")  
           
     user = {
         "name": name, 
         "dob": dob, 
         "address": address,
         "description": description,
-        "createdAt": datetime.datetime.now()
+        "createdAt": datetime.datetime.now(),
     }
     
     u_id = add_user(user)
@@ -60,24 +63,24 @@ def delete_user_by_id(id):
         return None
     
     # db = init_connection()
-    user_collection = app.db[user_collection_name]
-          
+    user_collection = app.db[user_collection_name]      
     resp = user_collection.delete_one({"_id": ObjectId(id)})
     return resp
 
-def update_user_by_id(u_id, request):
-    
-    user = get_user_by_id(id)
+def update_user_by_id(u_id, user_data):
+
+    user = get_user_by_id(u_id)
     if user is None:
         return None
     
     # db = init_connection()
     user_collection = app.db[user_collection_name]
     
-    name = request.get("name")
-    dob = request.get("dob")
-    address = request.get("address")
-    description = request.get("description")
+    name = user_data.get("name")
+    dob = user_data.get("dob")
+    address = user_data.get("address")
+    description = user_data.get("description")
+    friends = user_data.get("friends")
 
     changed_fields = {}
     # Add another try/catch here to backtrack to relevant function
@@ -90,6 +93,8 @@ def update_user_by_id(u_id, request):
             changed_fields['address'] = validate_input(address, str, 'address')
         if description is not None:
             changed_fields['description'] = validate_input(description, str, 'description')
+        if friends is not None:
+            changed_fields["friends"] = friends
             
     except AssertionError as e:
         raise AssertionError(f"[update_user_by_id] {str(e)}")
@@ -102,3 +107,31 @@ def update_user_by_id(u_id, request):
     )
        
     return response
+
+def add_friend_to_user(user_id, friend_id):
+   
+    if user_id == friend_id:
+        raise Exception("[add_friend_to_user] user_id and friend_id must be different for the friend.")
+
+    # Error handling in case friend is not found
+    user = get_user_by_id(user_id)
+    friend = get_user_by_id(friend_id)
+
+    if user is None or friend is None:
+        return None
+    
+    if "friends" not in user:
+        user["friends"] = [friend_id]
+    
+    else:
+        curr_friends = user["friends"]
+        for curr_friend in curr_friends:
+            if curr_friend == friend_id:
+                raise Exception(f"[add_friend_to_user] The user {friend_id} is already a friend of the user {user_id}.")
+        
+        
+        user["friends"].append(friend_id)
+
+    update_status = update_user_by_id(user_id, user)
+    
+    return update_status
