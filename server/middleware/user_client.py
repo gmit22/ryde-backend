@@ -5,12 +5,16 @@ import datetime
 
 user_collection_name = "users"
 
-def add_user(user):
+def add_user(user: dict):
     user_collection = app.db[user_collection_name]
     u_id = user_collection.insert_one(user)
     return u_id.inserted_id
-    
-def create_new_user(user_data):
+
+"""
+    Parses the given input to check and validate each field of the user data against the expected types. 
+    Ensures that the user does not provide friends or createdAt; as this is added through the API only.
+"""
+def create_new_user(user_data: dict):
        
     try:      
         name = validate_input(user_data.get('name'), str, 'name')
@@ -42,42 +46,43 @@ def create_new_user(user_data):
     u_id = add_user(user)
     return u_id
 
-def get_user_by_id(id):
-
-    # db = init_connection()
+def get_user_by_id(id: str):
     user_collection = app.db[user_collection_name]
     user = user_collection.find_one({"_id": ObjectId(id)})
     
     return parse_json(user)
 
 def get_all_users():
-    # db = init_connection()
     user_collection = app.db[user_collection_name]
     resp = user_collection.find()
     total_users = list(resp)
     
-    # if len(total_users) == 0:
-    #     raise Exception(f"[get_all_users] No users were found stored in the db.")
     return parse_json(total_users)
 
-def delete_user_by_id(id):
+"""
+    Check if the user to be deleted exists in the db, if they exist then delete from the db else return None.     
+"""
+def delete_user_by_id(id: str):
     
     user = get_user_by_id(id)
     if user is None:
         return None
     
-    # db = init_connection()
     user_collection = app.db[user_collection_name]      
     resp = user_collection.delete_one({"_id": ObjectId(id)})
     return resp
 
-def update_user_by_id(u_id, user_data):
+"""
+    Given the user_data, and u_id for the corresponding user; extract the fields provided to make an update to the 
+    user entity.
+
+"""
+def update_user_by_id(u_id: str, user_data: dict):
 
     user = get_user_by_id(u_id)
     if user is None:
         return None
     
-    # db = init_connection()
     user_collection = app.db[user_collection_name]
     
     name = user_data.get("name")
@@ -119,12 +124,16 @@ def update_user_by_id(u_id, user_data):
        
     return response
 
-def add_friend_to_user(user_id, friend_id):
+"""
+    Adds a friend to the user, and ensures that the user is not trying to add themselves as a friend.  
+    Keeps check that the same user is not added as a friend if they already exist in the friends.
+"""
+def add_friend_to_user(user_id: str, friend_id: str):
    
     if user_id == friend_id:
         raise Exception("[add_friend_to_user] user_id and friend_id must be different for the friend.")
 
-    # Error handling in case friend is not found
+    # Checks that a user corresponding to the provided user_id, friend_id exists in the database.
     user = get_user_by_id(user_id)
     friend = get_user_by_id(friend_id)
 
@@ -133,7 +142,6 @@ def add_friend_to_user(user_id, friend_id):
     
     if "friends" not in user:
         user["friends"] = [friend_id]
-    
     else:
         curr_friends = user["friends"]
         for curr_friend in curr_friends:
@@ -142,11 +150,16 @@ def add_friend_to_user(user_id, friend_id):
         
         user["friends"].append(friend_id)
 
-    update_status = update_user_by_id(user_id, user)
-    
+    update_status = update_user_by_id(user_id, user) 
     return update_status
 
-def get_nearby_users(user_id, distance, limit=None):
+"""
+    Gets friends for a user, which are in a certain proximity as specified. We ensure that the user, and friends exist in 
+    the db and have a valid longitude/latitude specified. 
+    In case no limit is specified, we return all the people found.
+"""
+
+def get_nearby_users(user_id: str, distance: str, limit=None):
     
     user = get_user_by_id(user_id)
     # In case no user associated to user_id found, we return None

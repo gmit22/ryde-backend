@@ -3,7 +3,6 @@ from database.config import RunConfig
 
 if __name__ == "__main__":
 
-    app= create_app(RunConfig)
-
+    app = create_app(RunConfig)
     print("Starting server on the port 5000...")
     app.run()
