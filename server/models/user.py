@@ -11,4 +11,6 @@ class User(BaseModel):
     description: str
     createdAt: datetime
     friends: list
+    latitude: float
+    longitude: float
     

@@ -17,6 +17,8 @@ def create_new_user(user_data):
         dob = validate_input(user_data.get('dob'), str, 'dob')
         address = validate_input(user_data.get('address'), str, 'address')
         description = validate_input(user_data.get('description'), str, 'description')
+        longitude = validate_input(user_data.get('longitude'), float, 'longitude')
+        latitude = validate_input(user_data.get('latitude'), float, 'latitude')
             
     except Exception as e:
         raise Exception(f"[parse_user] {str(e)}")
@@ -33,6 +35,8 @@ def create_new_user(user_data):
         "address": address,
         "description": description,
         "createdAt": datetime.datetime.now(),
+        "longitude": longitude,
+        "latitude": latitude
     }
     
     u_id = add_user(user)
@@ -81,6 +85,8 @@ def update_user_by_id(u_id, user_data):
     address = user_data.get("address")
     description = user_data.get("description")
     friends = user_data.get("friends")
+    latitude = user_data.get("latitude")
+    longitude = user_data.get("longitude")
 
     changed_fields = {}
     # Add another try/catch here to backtrack to relevant function
@@ -95,6 +101,10 @@ def update_user_by_id(u_id, user_data):
             changed_fields['description'] = validate_input(description, str, 'description')
         if friends is not None:
             changed_fields["friends"] = friends
+        if latitude is not None:
+            changed_fields["latitude"] = latitude
+        if longitude is not None:
+            changed_fields["longitude"] = longitude
             
     except AssertionError as e:
         raise AssertionError(f"[update_user_by_id] {str(e)}")
@@ -128,7 +138,6 @@ def add_friend_to_user(user_id, friend_id):
         for curr_friend in curr_friends:
             if curr_friend == friend_id:
                 raise Exception(f"[add_friend_to_user] The user {friend_id} is already a friend of the user {user_id}.")
-        
         
         user["friends"].append(friend_id)
 

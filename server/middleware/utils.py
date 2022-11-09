@@ -3,6 +3,9 @@ from bson import json_util
 
 def validate_input(input, expectedType, field):
             
+    if input is None and (field == "latitude" or field == "longitude"):
+        input = 0.0
+            
     if input is None:
         raise Exception(f"Cannot create user with no valid {field}")
     
