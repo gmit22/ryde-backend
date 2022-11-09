@@ -1,6 +1,6 @@
 from bson import ObjectId
 from flask import current_app as app
-from middleware.utils import validate_input, parse_json
+from middleware.utils import validate_input, parse_json, compute_distance
 import datetime
 
 user_collection_name = "users"
@@ -90,6 +90,7 @@ def update_user_by_id(u_id, user_data):
 
     changed_fields = {}
     # Add another try/catch here to backtrack to relevant function
+    # Sets the value for the updated fields, while validating the input provided by the user.
     try:
         if name is not None:
             changed_fields['name'] = validate_input(name, str, 'name')
@@ -144,3 +145,48 @@ def add_friend_to_user(user_id, friend_id):
     update_status = update_user_by_id(user_id, user)
     
     return update_status
+
+def get_nearby_users(user_id, distance, limit=None):
+    
+    user = get_user_by_id(user_id)
+    # In case no user associated to user_id found, we return None
+    if user is None:
+        return None
+    
+    if limit is not None:
+        max_users = int(limit)
+
+    if (user.get("longitude") is None and user.get("latitude") is None):
+        raise Exception("[get_nearby_users] user does not have both latitude and longitude values")
+       
+    longitude = float(user.get("longitude"))
+    latitude = float(user.get("latitude"))
+    
+    dist = float(distance)    
+    number_of_friends = 0
+    nearby_friends = []
+    
+    if user.get("friends") is None or len(user["friends"]) == 0:
+        return nearby_friends
+    else:
+        total_friends = user.get("friends")
+        
+        for friend_id in total_friends:
+            # In case limit is not specified, we return all the users satisfying the given criteria.
+            # If the required number of friends are found, we return the found friends.
+            if limit is not None and number_of_friends >= max_users:
+                break
+            friend = get_user_by_id(friend_id)
+            
+            # Check to ensure that user exists and has latitude/longitude values.
+            if friend and not(friend.get("longitude") is None and friend.get("latitude") is None):
+               
+                friend_longitude = float(friend["longitude"])
+                friend_latitude = float(friend["latitude"])  
+                curr_dist = compute_distance(lat1=latitude, lat2=friend_latitude, lon1=longitude, lon2=friend_longitude)
+
+                if curr_dist <= dist:
+                    nearby_friends.append(friend)
+                    number_of_friends += 1 
+        
+    return nearby_friends

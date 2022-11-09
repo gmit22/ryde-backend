@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models.user import User
-from middleware.user_client import create_new_user, get_user_by_id, get_all_users, delete_user_by_id, update_user_by_id, add_friend_to_user
+from middleware.user_client import create_new_user, get_user_by_id, get_all_users, delete_user_by_id, update_user_by_id, \
+    add_friend_to_user, get_nearby_users
 
 users_api = Blueprint(
     'users_api', 'users_api', url_prefix='/api/v1/')
@@ -102,3 +103,23 @@ def add_friend():
         
     except Exception as e:
         return jsonify({"error": f"{str(e)}"}), 400
+  
+@users_api.route('/get-nearby-friends/<id>', methods=['Get'])  
+def get_nearby_friends(id):
+    
+    limit = request.args.get('limit')
+    max_distance = request.args.get('distance')
+    
+    try:
+        nearby_friends = get_nearby_users(id, max_distance, limit)
+        
+        if nearby_friends is None:
+            return jsonify({"Status": "The requested user_id does not exist in the database"}), 404
+        if nearby_friends == []:
+            return jsonify({"Status": "No friends exist for the user satisfying the given criteria"}), 200
+
+        return jsonify({"users": nearby_friends}), 200
+        
+    except Exception as e:
+        return jsonify(f"[get_nearby_friends] {str(e)}"), 400
+        
