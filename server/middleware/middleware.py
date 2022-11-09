@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from models.user import User
-from middleware.db import create_new_user, get_user_by_id, get_all_users, delete_user_by_id, update_user_by_id
+from middleware.user_client import create_new_user, get_user_by_id, get_all_users, delete_user_by_id, update_user_by_id
 
 users_api = Blueprint(
     'users_api', 'users_api', url_prefix='/api/v1/')

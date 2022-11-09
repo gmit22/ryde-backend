@@ -10,7 +10,7 @@ def create_app(config):
     
     connection_url, db = app.config.get("MONGO_URI"), app.config.get("MONGO_DBNAME")
     app.db = init_connection(connection_url, db)
-        
+    
     @app.route('/')
     def serve():
         return "<h1>Welcome!<h1>"

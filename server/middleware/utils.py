@@ -8,7 +8,7 @@ def validate_input(input, expectedType, field):
     
     if isinstance(input, expectedType):
         return input
-    raise AssertionError("[validate_input] Invalid input for type", field)
+    raise AssertionError(f"[validate_input] Invalid input for field {field}")
 
 def parse_json(data):
     return json.loads(json_util.dumps(data))
