@@ -30,9 +30,11 @@ def token_required(f):
         try:
             # decoding the payload to fetch the stored details
             data = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        except:
+        except jwt.exceptions.InvalidSignatureError:
+            return jsonify({"error": "The given token has an invalid signature"}) , 401
+        except Exception as e:
             return jsonify({
-                'message' : 'Token is invalid !!'
+                'message' : f'{str(e)}'
             }), 401
   
         return  f(*args, **kwargs)
@@ -64,7 +66,7 @@ def get_user(id):
     except Exception as e:
         return jsonify(f"[get_user] {str(e)}"), 400
     
-@users_api.route('/user', methods=["GET"])
+@users_api.route('/users', methods=["GET"])
 @token_required
 def get_users():
     try:
@@ -95,17 +97,14 @@ def delete_user(id):
     except AssertionError as e:
         return jsonify(f"[delete_user_by_id] {str(e)}"), 400
     
-@users_api.route('/update-user', methods=["Put"])
+@users_api.route('/update-user/<id>', methods=["Put"])
 @token_required
-def update_user():
+def update_user(id):
 
-    user_data = request.get_json()
+    user_data = request.args
     try:         
-        u_id = user_data.get("id")
-        if u_id is None:
-            raise Exception("No u_id found in the input")
-
-        upsert_resp = update_user_by_id(u_id, user_data)
+       
+        upsert_resp = update_user_by_id(id, user_data)
         # We do not permit creating elements via the PUT method.
         if upsert_resp is None:
             return jsonify({"Status": "The requested user_id does not exist in the database"}), 404

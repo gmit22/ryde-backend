@@ -33,8 +33,8 @@ class TestWebApp(unittest.TestCase):
         assert self.app is not None
         assert self.db is not None
           
-    @patch('middleware.user_client.create_new_user') 
-    def test_add_user_positive(self, mock_uid):
+    @patch('middleware.user_client.add_user') 
+    def test_add_user_positive_x(self, mock_uid):
         
         mock_uid.return_value = '636b0c918114e498c68d5c58'
         user = {
@@ -43,9 +43,11 @@ class TestWebApp(unittest.TestCase):
             "description": "testing add usser",
             "dob": "November 8, 2001"
         }  
+
         actual_result = user_client.create_new_user(user)
         self.assertIsNotNone(actual_result)
         self.assertIsInstance(actual_result, str)
+        
         
     @patch('middleware.user_client.create_new_user') 
     def test_add_user_nodob(self, mock_uid):
@@ -61,10 +63,9 @@ class TestWebApp(unittest.TestCase):
             
         self.assertEqual("[parse_user] Cannot create user with no valid dob", str(context.exception))
     
-    @patch('middleware.user_client.create_new_user') 
-    def test_add_user__with_created(self, mock_uid):
-        mock_uid.side_effect = [Exception("[parse_user] The creation timing of the user has to be stamped by API")]
-        
+    
+    def test_add_user_with_created(self):
+       
         user = {
             "name": "abc123",
             "address": "Singadspore",
@@ -72,15 +73,13 @@ class TestWebApp(unittest.TestCase):
             "dob": "22 March 2001",
             "createdAt": "2022-11-09T00:16:37.496Z"
         }  
-        
+               
         with self.assertRaises(Exception) as context:
             user_client.create_new_user(user)
         self.assertIn("The creation timing of the user has to be stamped by API", str(context.exception))
-    
-    @patch('middleware.user_client.create_new_user') 
-    def test_add_user_nodob(self, mock_uid):
-        mock_uid.side_effect = [Exception("[parse_user] Cannot create user with no valid dob")]
-        
+        self.assertIsNotNone(context)
+   
+    def test_add_user_nodob(self):
         user = {
             "name": "abc123",
             "address": "Singadspore",

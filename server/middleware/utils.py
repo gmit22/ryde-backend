@@ -11,7 +11,7 @@ R = 6378.1
 def validate_input(input, expectedType, field):
             
     if input is None and (field == "latitude" or field == "longitude"):
-        input = 0.0
+        return None
             
     if input is None:
         raise Exception(f"Cannot create user with no valid {field}")
