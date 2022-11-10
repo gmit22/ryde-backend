@@ -156,6 +156,11 @@ In case a user corresponding to the given `id` is not found in the db, we return
 
 > **_NOTE:_**  We Can return `204 No Content success` to depict that the non-existent client has been deleted, but `404` seems more fit since the client does not exist.
 
+**Edge Cases**
+1. No user corresponding to the given `id` exists in the database
+2. User is not authorized 
+3. Issue with database connection
+
 ### Get Users
 Used to get all the users present in the database.
 
@@ -164,8 +169,12 @@ Used to get all the users present in the database.
 #### Successful Request
 ![GET_USERs](images/get_users.PNG)
 
+**Edge Cases**
+1. User is not authorized 
+2. Issue with database connection
 ### Delete User
 Used to delete a user from the db corresponding to the `id` provided in the request.
+
 
 `POST http://localhost:5000/api/v1/delete-user/<id>`
 
@@ -176,6 +185,11 @@ Used to delete a user from the db corresponding to the `id` provided in the requ
 
 In case a user corresponding to the given `id` is not found in the db, we return a `404 Not Found` response.
 ![DELETE_USER_BY_ID Invalid ID](images/delete_user_failure.PNG)
+
+**Edge Cases**
+1. No user corresponding to the given `id` found in the db
+2. User is not authroized
+3. Issue with database connection
 
 ### Create User
 Used to create and add a new user to the database. If successful, returns the `u_id` to identify different users in the db.
@@ -208,6 +222,12 @@ We ensure that each of the fields provided match the expected type. For instance
 
 ![CREATE_USER_failure_with_invalid_description](images/create_user_invalid_description.PNG)
 
+**Edge Cases**
+1. Required fields are missing in the request
+2. User is not authorized
+3. Issue with database connection
+4. `createdAt` or `friends` being set by the user in the request
+5. Fields do not match their expected types as mentioned
 
 ### Update User
 Used to update user details in the database. Arguments to update the required user are provided as query parameters
@@ -236,6 +256,13 @@ These are the following fields that can be includeded as a query parameter for u
 | latitude      | `float`       | Optional   |
 | longitude  | `float`    | Optional|
 
+**Edge Cases**
+1. Required field `id` is missing in the request
+2. User is not authorized
+3. Issue with database connection
+4. No user corresponding to the `id` exists in the database
+5. Fields do not match their expected types as mentioned
+
 ### Add Friend
 For implementing this feature, we assume in case *user_1* is associated with *user_2* as a friend then *user_2* is also associated with *user_1* as a friend.
 
@@ -257,6 +284,12 @@ In case the user provides the same `_id` for *friendId* and *userId*, we return 
 
 ![ADD_FRIEND_FAILURE Same ID](images/add_friend_failure_same_id.PNG)
 
+**Edge Cases**
+1. `userId` and `friendId` are same
+2. Issue with database connection
+3. No user corresponding to the `userId` or `friendId` exists in the database
+4. `friendId` already exists in the friends of `userId`
+
 ### Find Nearby Friends
 
 Used to get all the friends for the user corresponding to `id`, and filter them based on their proximity `distance` from the user. In case `limit` is `None`, we return all the friends satisfying the given criteria.
@@ -276,6 +309,13 @@ In case no friends satisfying the given criteria exist, we return a `200 Ok` res
 In case no location co-ordinates (latitude and longitude) are found for the user corresponding to `id`, we return a `400 Bad Request` response as it cannot be processed.
 
 ![Find_Neaby_Friends Failure](images/get_nearby_friends_no_location_failute.PNG)
+
+**Edge Cases**
+1. Issue with database connection
+2. No user corresponding to the `id` exists in the database
+3. Unauthorized user
+4. Given user has either of the two filds `latitude` or `longitude` missing
+
 
 ## Logger Strategy
 
